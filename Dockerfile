@@ -1,4 +1,4 @@
-FROM fabric8/java-centos-openjdk8-jre
+FROM project31/aarch64-fabric8-java-centos-openjdk8-jre
 
 RUN yum install -y unzip git wget
 
@@ -25,11 +25,16 @@ VOLUME /var/jenkins_home
 # or config file with your custom jenkins Docker image.
 RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d
 
-ENV TINI_SHA 066ad710107dc7ee05d3aa6e4974f01dc98f3888
-
 # Use tini as subreaper in Docker container to adopt zombie processes 
-RUN curl -fsSL https://github.com/krallin/tini/releases/download/v0.5.0/tini-static -o /bin/tini && chmod +x /bin/tini \
-  && echo "$TINI_SHA  /bin/tini" | sha1sum -c -
+RUN export myarch=`arch` ;if [ "$myarch" = "aarch64" ]; then \
+    echo 'v0.5.0-aarch64' && \
+    curl -fsSL https://github.com/Project31/tini/releases/download/v0.5.0-aarch64/tini-static -o /bin/tini && chmod +x /bin/tini \
+    && echo "CCD065416F3202F3E58A978AEEAC7B5B45AE3B1416F0EF9C90CA0D8F281FC16C /bin/tini" | sha256sum -c - ; \
+  else \
+    echo 'v0.5.0-$myarch' && \
+    curl -fsSL https://github.com/krallin/tini/releases/download/v0.5.0/tini-static -o /bin/tini && chmod +x /bin/tini \
+    && echo "066ad710107dc7ee05d3aa6e4974f01dc98f3888  /bin/tini" | sha1sum -c - ; \ 
+  fi;
 
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
